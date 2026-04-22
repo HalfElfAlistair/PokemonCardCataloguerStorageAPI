@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ptcg-cataloguer-storage-api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+10617136a64c97487d35960fdea3af9eb06db824")]
 [assembly: System.Reflection.AssemblyProductAttribute("ptcg-cataloguer-storage-api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ptcg-cataloguer-storage-api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
