@@ -15,9 +15,21 @@ var users = new List<User>
                 CardName = "Gastly",
                 Count = 1
             },
+        },
+        Lists = new List<CardsList>
+        {
+            new CardsList
+            {
+                ListId = "favourites",
+                ListName = "Favourites",
+                CardIDs = ["sv03.5-092"]
+            }
         }
     },
 };
+
+builder.Services.AddSingleton(users);
+builder.Services.AddSingleton<CataloguerService>();
 
 
 // Registers the required services
@@ -51,129 +63,91 @@ static Card matchCardID(List<Card> cards, string CardId)
 app.MapGet("/", () => "API is running!");
 
 // Users Endpoints
-// Get users
-app.MapGet("/users", () => users);
-
 // Get user
-app.MapGet("/users/{Uid}", (string Uid) =>
+app.MapGet("/users/{Uid}", (string Uid, CataloguerService service) =>
 {
-    var user = matchUserID(users, Uid);
-
-    if (user is null)
-        return Results.NotFound();
-
-    // separates child data from user, which is collected from a different endpoint
-    var userData = new
-    {
-        user.Name,
-        user.Uid
-    };
-
-    return Results.Ok(userData);
+    return service.getUser(Uid);
 });
 
 // Add user
-app.MapPost("/users", (User item) =>
+app.MapPost("/users", (User user, CataloguerService service) =>
 {
-    users.Add(item);
-    return Results.Created($"/users/{item.Uid}", item);
+    return service.AddUser(user);
 });
 
 // Update user
-app.MapPut("/users/{Uid}", (string Uid, User item) =>
+app.MapPut("/users/{Uid}", (string Uid, User userData, CataloguerService service) =>
 {
-    var user = matchUserID(users, Uid);
-    if (user is null)
-        return Results.NotFound();
-
-    user.Name = item.Name;
-
-    return Results.Ok(user);
+    return service.UpdateUser(Uid, userData);
 });
 
 // Delete user
-app.MapDelete("/users/{Uid}", (string Uid) =>
+app.MapDelete("/users/{Uid}", (string Uid, CataloguerService service) =>
 {
-    var user = matchUserID(users, Uid);
-    if (user is null)
-        return Results.NotFound();
-
-    users.Remove(user);
-    return Results.NoContent();
+    return service.DeleteUser(Uid);
 });
 
 // Cards Endpoints
 // Get cards
-app.MapGet("/users/{Uid}/cards", (string Uid) =>
+app.MapGet("/users/{Uid}/cards", (string Uid, CataloguerService service) =>
 {
-    var user = matchUserID(users, Uid);
-    if (user is null)
-        return Results.NotFound();
-
-    return Results.Ok(user.Cards);
+    return service.GetCards(Uid);
 });
 
 // Get card
-app.MapGet("/users/{Uid}/cards/{CardId}", (string Uid, string CardId) =>
+app.MapGet("/users/{Uid}/cards/{CardId}", (string Uid, string CardId, CataloguerService service) =>
 {
-    var user = matchUserID(users, Uid);
-    if (user is null)
-        return Results.NotFound();
-
-    var card = matchCardID(user.Cards, CardId);
-
-    return card is not null ? Results.Ok(card) : Results.NotFound();
+    return service.GetCard(Uid, CardId);
 });
 
 // Add card 
-app.MapPost("users/{Uid}/cards", (string Uid, Card card) =>
+app.MapPost("users/{Uid}/cards", (string Uid, Card cardData, CataloguerService service) =>
 {
-    var user = matchUserID(users, Uid);
-    if (user is null)
-        return Results.NotFound();
-
-    user.Cards.Add(card);
-
-    return Results.Created($"/tasks/{Uid}/children/{card.CardId}", card);
+    return service.AddCard(Uid, cardData);
 });
 
 // Update card
-app.MapPut("/users/{Uid}/cards/{CardId}", (string Uid, string CardId, Card item) =>
+app.MapPut("/users/{Uid}/cards/{CardId}", (string Uid, string CardId, Card cardData, CataloguerService service) =>
 {
-    // Returns the first element of a sequence, or a default value if no element is found.
-    var user = matchUserID(users, Uid);
-    if (user is null)
-        return Results.NotFound();
-
-    var card = matchCardID(user.Cards, CardId);
-
-    if (card is null)
-        return Results.NotFound();
-
-    card.Count = item.Count;
-
-    return Results.Ok(card);
+    return service.UpdateCard(Uid, CardId, cardData);
 });
 
 // Delete card
-app.MapDelete("/users/{Uid}/cards/{CardId}", (string Uid, string CardId) =>
+app.MapDelete("/users/{Uid}/cards/{CardId}", (string Uid, string CardId, CataloguerService service) =>
 {
-    // Returns the first element of a sequence, or a default value if no element is found.
-    var user = matchUserID(users, Uid);
-    if (user is null)
-        return Results.NotFound();
-
-    var card = matchCardID(user.Cards, CardId);
-
-    if (card is null)
-        return Results.NotFound();
-
-    user.Cards.Remove(card);
-    return Results.NoContent();
+    return service.DeleteCard(Uid, CardId);
 });
 
+// Lists Endpoints
+// Get lists
+app.MapGet("users/{Uid}/lists", (string Uid, CataloguerService service) =>
+{
+    return service.GetLists(Uid);
+});
 
+// Get list
+app.MapGet("users/{Uid}/lists/{ListId}", (string Uid, string ListId, CataloguerService service) =>
+{
+    return service.GetList(Uid, ListId);
+});
 
+// Add list
+app.MapPost("users/{Uid}/lists", (string Uid, CardsList list, CataloguerService service) =>
+{
+    return service.AddList(Uid, list);
+});
+
+// Update list
+app.MapPut("users/{Uid}/lists/{ListId}", (string Uid, string ListId, CardsList list, CataloguerService service) =>
+{
+    return service.UpdateList(Uid, ListId, list);
+});
+
+// Delete list
+app.MapDelete("users/{Uid}/lists/{ListId}", (string Uid, string ListId, CataloguerService service) =>
+{
+    return service.DeleteList(Uid, ListId);
+});
 
 
 
@@ -188,6 +162,7 @@ public class User
     public string Name { get; set; } = "";
 
     public List<Card> Cards { get; set; } = new();
+    public List<CardsList> Lists { get; set; } = new();
 }
 
 public class Card
@@ -195,4 +170,11 @@ public class Card
     public string CardId { get; set; } = "";
     public string CardName { get; set; } = "";
     public int Count { get; set; } = 0;
+}
+
+public class CardsList
+{
+    public string ListId { get; set; } = "";
+    public string ListName { get; set; } = "";
+    public List<string> CardIDs { get; set; } = [];
 }
