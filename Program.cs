@@ -6,14 +6,15 @@ var users = new List<User>
     new User
     {
         Name = "Testing",
-        Uid = "mFaFtWyHGzVqtuM4kQ9LVzbSpzk1",
+        Uid = Guid.Parse("0bf88970-1035-47e3-a5a7-7d8883f89d11"),
         Cards = new List<Card>
         {
             new Card
             {
                 CardId = "sv03.5-092",
                 CardName = "Gastly",
-                Count = 1
+                Count = 1,
+                Illustrator = "Tomokazu Komiya"
             },
         },
         Lists = new List<CardsList>
@@ -29,7 +30,9 @@ var users = new List<User>
 };
 
 builder.Services.AddSingleton(users);
-builder.Services.AddSingleton<CataloguerService>();
+builder.Services.AddSingleton<UserService>();
+builder.Services.AddSingleton<CardService>();
+builder.Services.AddSingleton<ListService>();
 
 
 // Registers the required services
@@ -48,133 +51,106 @@ if (app.Environment.IsDevelopment())
 // Redirects HTTP requests to HTTPS
 app.UseHttpsRedirection();
 
-// checks through users and returns valid user if matching provided Uid
-static User matchUserID(List<User> users, string Uid)
-{
-    return users.FirstOrDefault(u => u.Uid == Uid);
-}
-
-// checks through cards and returns valid card if matching provided CardId
-static Card matchCardID(List<Card> cards, string CardId)
-{
-    return cards.FirstOrDefault(c => c.CardId == CardId);
-}
 
 app.MapGet("/", () => "API is running!");
 
 // Users Endpoints
-// Get user
-app.MapGet("/users/{Uid}", (string Uid, CataloguerService service) =>
+// Get users
+app.MapGet("/users", (UserService service) =>
 {
-    return service.getUser(Uid);
+    return service.GetAllUsers();
+});
+
+// Get user
+app.MapGet("/users/{uid}", (Guid uid, UserService service) =>
+{
+    return service.GetUser(uid);
 });
 
 // Add user
-app.MapPost("/users", (User user, CataloguerService service) =>
+app.MapPost("/users", (UserCreateDto dto, UserService service) =>
 {
-    return service.AddUser(user);
+    return service.CreateUser(dto);
 });
 
 // Update user
-app.MapPut("/users/{Uid}", (string Uid, User userData, CataloguerService service) =>
+app.MapPut("/users/{uid}", (Guid uid, UserUpdateDto dto, UserService service) =>
 {
-    return service.UpdateUser(Uid, userData);
+    return service.UpdateUser(uid, dto);
 });
 
 // Delete user
-app.MapDelete("/users/{Uid}", (string Uid, CataloguerService service) =>
+app.MapDelete("/users/{uid}", (Guid uid, UserService service) =>
 {
-    return service.DeleteUser(Uid);
+    return service.DeleteUser(uid);
 });
 
 // Cards Endpoints
 // Get cards
-app.MapGet("/users/{Uid}/cards", (string Uid, CataloguerService service) =>
+app.MapGet("/users/{Uid}/cards", (Guid Uid, CardService service) =>
 {
     return service.GetCards(Uid);
 });
 
 // Get card
-app.MapGet("/users/{Uid}/cards/{CardId}", (string Uid, string CardId, CataloguerService service) =>
+app.MapGet("/users/{Uid}/cards/{CardId}", (Guid Uid, string CardId, CardService service) =>
 {
     return service.GetCard(Uid, CardId);
 });
 
-// Add card 
-app.MapPost("users/{Uid}/cards", (string Uid, Card cardData, CataloguerService service) =>
+// Add card
+app.MapPost("users/{Uid}/cards", (Guid Uid, CardCreateDto dto, CardService service) =>
 {
-    return service.AddCard(Uid, cardData);
+    return service.AddCard(Uid, dto);
 });
 
 // Update card
-app.MapPut("/users/{Uid}/cards/{CardId}", (string Uid, string CardId, Card cardData, CataloguerService service) =>
+app.MapPut("/users/{Uid}/cards/{CardId}", (Guid Uid, string CardId, CardUpdateDto dto, CardService service) =>
 {
-    return service.UpdateCard(Uid, CardId, cardData);
+    return service.UpdateCard(Uid, CardId, dto);
 });
 
 // Delete card
-app.MapDelete("/users/{Uid}/cards/{CardId}", (string Uid, string CardId, CataloguerService service) =>
+app.MapDelete("/users/{Uid}/cards/{CardId}", (Guid Uid, string CardId, CardService service) =>
 {
     return service.DeleteCard(Uid, CardId);
 });
 
 // Lists Endpoints
 // Get lists
-app.MapGet("users/{Uid}/lists", (string Uid, CataloguerService service) =>
+app.MapGet("users/{Uid}/lists", (Guid Uid, ListService service) =>
 {
     return service.GetLists(Uid);
 });
 
 // Get list
-app.MapGet("users/{Uid}/lists/{ListId}", (string Uid, string ListId, CataloguerService service) =>
+app.MapGet("users/{Uid}/lists/{ListId}", (Guid Uid, string ListId, ListService service) =>
 {
     return service.GetList(Uid, ListId);
 });
 
-// Add list
-app.MapPost("users/{Uid}/lists", (string Uid, CardsList list, CataloguerService service) =>
+// Create list
+app.MapPost("users/{Uid}/lists", (Guid Uid, CardsListCreateDto dto, ListService service) =>
 {
-    return service.AddList(Uid, list);
+    return service.CreateList(Uid, dto);
 });
 
-// Update list
-app.MapPut("users/{Uid}/lists/{ListId}", (string Uid, string ListId, CardsList list, CataloguerService service) =>
+// Update list name
+app.MapPut("users/{Uid}/lists/{ListId}/name", (Guid Uid, string ListId, CardsListNameUpdateDto dto, ListService service) =>
 {
-    return service.UpdateList(Uid, ListId, list);
+    return service.UpdateListName(Uid, ListId, dto);
+});
+
+// Update list cardIds
+app.MapPut("users/{Uid}/lists/{ListId}", (Guid Uid, string ListId, CardsListUpdateDto dto, ListService service) =>
+{
+    return service.UpdateList(Uid, ListId, dto);
 });
 
 // Delete list
-app.MapDelete("users/{Uid}/lists/{ListId}", (string Uid, string ListId, CataloguerService service) =>
+app.MapDelete("users/{Uid}/lists/{ListId}", (Guid Uid, string ListId, ListService service) =>
 {
     return service.DeleteList(Uid, ListId);
 });
 
-
-
-
-
 app.Run();
-
-public class User
-{
-    // User data
-    public string Uid { get; set; } = "";
-    public string Name { get; set; } = "";
-
-    public List<Card> Cards { get; set; } = new();
-    public List<CardsList> Lists { get; set; } = new();
-}
-
-public class Card
-{
-    public string CardId { get; set; } = "";
-    public string CardName { get; set; } = "";
-    public int Count { get; set; } = 0;
-}
-
-public class CardsList
-{
-    public string ListId { get; set; } = "";
-    public string ListName { get; set; } = "";
-    public List<string> CardIDs { get; set; } = [];
-}
