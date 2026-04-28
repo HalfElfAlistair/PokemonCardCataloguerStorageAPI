@@ -1,0 +1,4 @@
+public class UserCreateDto
+{
+    public string Name { get; set; } = "";
+}
