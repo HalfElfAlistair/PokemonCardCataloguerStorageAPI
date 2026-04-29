@@ -1,3 +1,5 @@
+using FluentValidation;
+
 public class UserService
 {
     private readonly List<User> _users;
@@ -45,8 +47,12 @@ public class UserService
 
     // User inputs
     // POST
-    public IResult CreateUser(UserCreateDto dto)
+    public IResult CreateUser(UserCreateDto dto, IValidator<UserCreateDto> validator)
     {
+        var result = validator.Validate(dto);
+        if (!result.IsValid)
+            return Results.BadRequest(result.Errors);
+
         var user = FromCreateDto(dto);
         _users.Add(user);
 
@@ -54,8 +60,12 @@ public class UserService
     }
 
     // PUT
-    public IResult UpdateUser(Guid uid, UserUpdateDto dto)
+    public IResult UpdateUser(Guid uid, UserUpdateDto dto, IValidator<UserUpdateDto> validator)
     {
+        var result = validator.Validate(dto);
+        if (!result.IsValid)
+            return Results.BadRequest(result.Errors);
+
         var user = Helpers.matchUserID(_users, uid);
         if (user is null) return Results.NotFound();
 

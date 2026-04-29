@@ -1,3 +1,5 @@
+using FluentValidation;
+
 public class ListService
 {
     private readonly List<User> _users;
@@ -53,8 +55,12 @@ public class ListService
 
     // List inputs
     // POST
-    public IResult CreateList(Guid Uid, CardsListCreateDto dto)
+    public IResult CreateList(Guid Uid, CardsListCreateDto dto, IValidator<CardsListCreateDto> validator)
     {
+        var result = validator.Validate(dto);
+        if (!result.IsValid)
+            return Results.BadRequest(result.Errors);
+
         var user = Helpers.matchUserID(_users, Uid);
         if (user is null) return Results.NotFound();
 
@@ -67,8 +73,12 @@ public class ListService
     }
 
     // PUT
-    public IResult UpdateListName(Guid Uid, string ListId, CardsListNameUpdateDto dto)
+    public IResult UpdateListName(Guid Uid, string ListId, CardsListNameUpdateDto dto, IValidator<CardsListNameUpdateDto> validator)
     {
+        var result = validator.Validate(dto);
+        if (!result.IsValid)
+            return Results.BadRequest(result.Errors);
+
         // favourites list is a default, only the cardIds can be updated
         if (ListId == "favourites") return Results.StatusCode(405);
 
