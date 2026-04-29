@@ -1,0 +1,12 @@
+using FluentValidation;
+using System.Linq.Expressions;
+
+public abstract class ListNameRules<T> : AbstractValidator<T> where T : class
+{
+    protected void AddNameRules(Expression<Func<T, string>> selector)
+    {
+        RuleFor(selector)
+            .NotEmpty().WithMessage("A name is required.")
+            .MaximumLength(50).WithMessage("Name cannot exceed 50 characters.");
+    }
+}

@@ -1,3 +1,5 @@
+using FluentValidation;
+
 public class CardService
 {
 
@@ -54,20 +56,32 @@ public class CardService
 
     // Card inputs
     // POST
-    public IResult AddCard(Guid Uid, CardCreateDto dto)
+    public IResult AddCard(Guid Uid, CardCreateDto dto, IValidator<CardCreateDto> validator)
     {
+        var result = validator.Validate(dto);
+        if (!result.IsValid)
+            return Results.BadRequest(result.Errors);
+
         var user = Helpers.matchUserID(_users, Uid);
         if (user is null) return Results.NotFound();
 
         var card = FromCardCreateDto(dto);
+        // Checks to see if card is already present, prevents adding if so
+        var existingCardMatch = Helpers.matchCardID(user.Cards, card.CardId);
+        if (existingCardMatch is not null) return Results.StatusCode(405);
+
         user.Cards.Add(card);
 
         return Results.Created($"/users/{Uid}/cards/{card.CardId}", ToCardDto(card));
     }
 
     // PUT
-    public IResult UpdateCard(Guid Uid, string CardId, CardUpdateDto dto)
+    public IResult UpdateCard(Guid Uid, string CardId, CardUpdateDto dto, IValidator<CardUpdateDto> validator)
     {
+        var result = validator.Validate(dto);
+        if (!result.IsValid)
+            return Results.BadRequest(result.Errors);
+
         var user = Helpers.matchUserID(_users, Uid);
         if (user is null) return Results.NotFound();
 

@@ -1,3 +1,5 @@
+using FluentValidation;
+
 // Initialises a builder for web applications and services
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +35,7 @@ builder.Services.AddSingleton(users);
 builder.Services.AddSingleton<UserService>();
 builder.Services.AddSingleton<CardService>();
 builder.Services.AddSingleton<ListService>();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 
 // Registers the required services
@@ -68,15 +71,15 @@ app.MapGet("/users/{uid}", (Guid uid, UserService service) =>
 });
 
 // Add user
-app.MapPost("/users", (UserCreateDto dto, UserService service) =>
+app.MapPost("/users", (UserCreateDto dto, IValidator<UserCreateDto> validator, UserService service) =>
 {
-    return service.CreateUser(dto);
+    return service.CreateUser(dto, validator);
 });
 
 // Update user
-app.MapPut("/users/{uid}", (Guid uid, UserUpdateDto dto, UserService service) =>
+app.MapPut("/users/{uid}", (Guid uid, UserUpdateDto dto, IValidator<UserUpdateDto> validator, UserService service) =>
 {
-    return service.UpdateUser(uid, dto);
+    return service.UpdateUser(uid, dto, validator);
 });
 
 // Delete user
@@ -99,15 +102,15 @@ app.MapGet("/users/{Uid}/cards/{CardId}", (Guid Uid, string CardId, CardService 
 });
 
 // Add card
-app.MapPost("users/{Uid}/cards", (Guid Uid, CardCreateDto dto, CardService service) =>
+app.MapPost("users/{Uid}/cards", (Guid Uid, CardCreateDto dto, IValidator<CardCreateDto> validator, CardService service) =>
 {
-    return service.AddCard(Uid, dto);
+    return service.AddCard(Uid, dto, validator);
 });
 
 // Update card
-app.MapPut("/users/{Uid}/cards/{CardId}", (Guid Uid, string CardId, CardUpdateDto dto, CardService service) =>
+app.MapPut("/users/{Uid}/cards/{CardId}", (Guid Uid, string CardId, CardUpdateDto dto, IValidator<CardUpdateDto> validator, CardService service) =>
 {
-    return service.UpdateCard(Uid, CardId, dto);
+    return service.UpdateCard(Uid, CardId, dto, validator);
 });
 
 // Delete card
@@ -130,15 +133,15 @@ app.MapGet("users/{Uid}/lists/{ListId}", (Guid Uid, string ListId, ListService s
 });
 
 // Create list
-app.MapPost("users/{Uid}/lists", (Guid Uid, CardsListCreateDto dto, ListService service) =>
+app.MapPost("users/{Uid}/lists", (Guid Uid, CardsListCreateDto dto, IValidator<CardsListCreateDto> validator, ListService service) =>
 {
-    return service.CreateList(Uid, dto);
+    return service.CreateList(Uid, dto, validator);
 });
 
 // Update list name
-app.MapPut("users/{Uid}/lists/{ListId}/name", (Guid Uid, string ListId, CardsListNameUpdateDto dto, ListService service) =>
+app.MapPut("users/{Uid}/lists/{ListId}/name", (Guid Uid, string ListId, CardsListNameUpdateDto dto, IValidator<CardsListNameUpdateDto> validator, ListService service) =>
 {
-    return service.UpdateListName(Uid, ListId, dto);
+    return service.UpdateListName(Uid, ListId, dto, validator);
 });
 
 // Update list cardIds
